@@ -4653,6 +4653,22 @@ class PromptBuilder:
             elif re.search(r'translat|翻译', combined_dir, re.I):
                 target_lang = 'zh' if not CJK_CHAR_PATTERN.search(q_text) else 'generic'
 
+        if len(q.inputs) > 1:
+            stems = []
+            for item in (q.banked_blanks or []):
+                stem = ''
+                if isinstance(item, dict):
+                    stem = str(item.get('words') or item.get('question_text') or '').strip()
+                if stem:
+                    stems.append(stem)
+            if len(stems) == len(q.inputs) and len(set(stems)) > 1:
+                lines.append(f"   【小题列表】（共 {len(stems)} 个小题，每题都必须作答）")
+                for stem_index, stem in enumerate(stems, 1):
+                    lines.append(f"   {stem_index}. {stem}")
+                lines.append("   （回答时严格按 1、2、… 编号逐题输出，按题号对应每个小题，不要合并、不要遗漏）")
+            elif not stems:
+                lines.append(f"   （本题为 {len(q.inputs)} 个小题的简答组：请按题号 1、2、… 分别作答，每个小题都要有单独内容）")
+
         multi_item = multi_text or len(q.inputs) > 1
         if target_lang == 'en':
             suffix = "请按题号分别编号输出" if multi_item else "不要保留中文原文或题号"
